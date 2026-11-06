@@ -1,0 +1,150 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ProspectStatus {
+  NEW
+  RESEARCHING
+  QUALIFIED
+  CONTACTED
+  REPLIED
+  MEETING
+  DISQUALIFIED
+}
+
+enum CampaignStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  COMPLETED
+}
+
+enum ActivityType {
+  CREATED
+  RESEARCHED
+  EMAIL_DRAFTED
+  EMAIL_SENT
+  REPLIED
+  UNSUBSCRIBED
+  STATUS_CHANGED
+  NOTE_ADDED
+}
+
+model Workspace {
+  id           String      @id @default(cuid())
+  name         String
+  createdAt    DateTime    @default(now())
+  prospects    Prospect[]
+  campaigns    Campaign[]
+  icps         IdealCustomerProfile[]
+  suppressions Suppression[]
+}
+
+model IdealCustomerProfile {
+  id           String    @id @default(cuid())
+  workspaceId  String
+  name         String
+  industries   String[]
+  regions       String[]
+  companySizes String[]
+  titles       String[]
+  keywords     String[]
+  excluded     String[]
+  createdAt    DateTime  @default(now())
+  workspace    Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  @@index([workspaceId])
+}
+
+model Prospect {
+  id              String          @id @default(cuid())
+  workspaceId     String
+  company         String
+  website         String?
+  firstName       String?
+  lastName        String?
+  title           String?
+  email           String?
+  emailSource     String?
+  country         String?
+  industry        String?
+  companySize     String?
+  linkedinUrl     String?
+  summary         String?
+  fitScore        Int             @default(0)
+  status          ProspectStatus  @default(NEW)
+  consentBasis    String?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  workspace       Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  activities      Activity[]
+  campaignMembers CampaignMember[]
+  @@index([workspaceId, status])
+  @@index([workspaceId, email])
+}
+
+model Campaign {
+  id          String         @id @default(cuid())
+  workspaceId String
+  name        String
+  description String?
+  status      CampaignStatus @default(DRAFT)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  workspace   Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  steps       CampaignStep[]
+  members     CampaignMember[]
+  @@index([workspaceId, status])
+}
+
+model CampaignStep {
+  id         String   @id @default(cuid())
+  campaignId String
+  position   Int
+  delayDays  Int      @default(0)
+  subject    String
+  body       String
+  campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  @@unique([campaignId, position])
+}
+
+model CampaignMember {
+  id          String    @id @default(cuid())
+  campaignId  String
+  prospectId  String
+  currentStep Int       @default(0)
+  nextSendAt  DateTime?
+  stoppedAt   DateTime?
+  createdAt   DateTime  @default(now())
+  campaign    Campaign  @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  prospect    Prospect  @relation(fields: [prospectId], references: [id], onDelete: Cascade)
+  @@unique([campaignId, prospectId])
+  @@index([nextSendAt, stoppedAt])
+}
+
+model Activity {
+  id         String       @id @default(cuid())
+  prospectId String
+  type       ActivityType
+  message    String
+  metadata   Json?
+  createdAt  DateTime     @default(now())
+  prospect   Prospect     @relation(fields: [prospectId], references: [id], onDelete: Cascade)
+  @@index([prospectId, createdAt])
+}
+
+model Suppression {
+  id          String    @id @default(cuid())
+  workspaceId String
+  email       String
+  reason      String
+  source      String    @default("user")
+  createdAt   DateTime  @default(now())
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  @@unique([workspaceId, email])
+  @@index([email])
+}
