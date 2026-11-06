@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, type FormEvent } from "react";
+import { useMemo, useState, type FormEvent, type ReactNode, type ElementType } from "react";
 import {
   Activity, ArrowDownRight, ArrowUpRight, Bell, Building2, Check, ChevronDown,
   CircleHelp, Command, Filter, Globe2, Inbox, LayoutDashboard, Mail, Menu,
@@ -16,7 +16,7 @@ const navigation = [
   { title: "Manage", links: [{ label: "Reports", icon: Activity }, { label: "Settings", icon: Settings }] }
 ];
 
-function Badge({ children, tone = "gray" }: { children: React.ReactNode; tone?: string }) {
+function Badge({ children, tone = "gray" }: { children: ReactNode; tone?: string }) {
   const styles: Record<string, string> = {
     gray: "border-slate-700 bg-slate-800/70 text-slate-300",
     green: "border-emerald-500/20 bg-emerald-500/10 text-emerald-300",
@@ -26,7 +26,7 @@ function Badge({ children, tone = "gray" }: { children: React.ReactNode; tone?: 
   return <span className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-medium ${styles[tone] ?? styles.gray}`}>{children}</span>;
 }
 
-function Metric({ label, value, change, icon: Icon, tint }: { label: string; value: string; change: string; icon: React.ElementType; tint: string }) {
+function Metric({ label, value, change, icon: Icon, tint }: { label: string; value: string; change: string; icon: ElementType; tint: string }) {
   return (
     <div className="rounded-xl border border-slate-800 bg-[#101622] p-5">
       <div className="flex items-center justify-between"><span className="text-sm text-slate-400">{label}</span><span className={`rounded-lg p-2 ${tint}`}><Icon size={17}/></span></div>
